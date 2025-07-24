@@ -1,28 +1,43 @@
+import asyncio
 import logging
 import sys
 
 from colorama import Fore, Style
 
-from agent.agent import graph
+from agent.agent import BaseAgent, MyAgent
+from agent.state import AgentState
+from langchain_core.messages import HumanMessage
+
+import     logging.config
+
+from settings.config import config
+from settings.logger import get_logger_config
+
 logger = logging.getLogger(__name__)
 
-def stream_graph_updates(user_input: str):
-    for event in graph.stream({"messages": [{"role": "user", "content": user_input}]}):
-        for value in event.values():
-            print(f'{Fore.BLUE}Assistant: {value["messages"][-1].content}{Style.RESET_ALL}')
 
+async def main():
 
-def main():
+    agent: BaseAgent = MyAgent()
+
+    state: AgentState = AgentState()
+
     while True:
-        try:
-            user_input = input("User: ")
-        except UnicodeDecodeError:
-            user_input = sys.stdin.buffer.read().decode('utf-8', errors='replace')
-        logger.debug(user_input)
-        if user_input.lower() in ["quit", "exit", "q"]:
-            break
+        # try:
+        #     user_input = input("User: ")
+        # except UnicodeDecodeError:
+        #     user_input = sys.stdin.buffer.read().decode('utf-8', errors='replace')
 
-        stream_graph_updates(user_input)
+        user_input = input("User: ")
+
+        print(f'{Fore.GREEN}{user_input}{Style.RESET_ALL}')
+
+        state.messages.append(HumanMessage(content=user_input))
+        state = await agent.process(state=state)
+        resource = state.messages[-1].content
+
+        print(f'{Fore.BLUE}{resource}{Style.RESET_ALL}')
 
 if __name__ == "__main__":
-    main()
+    logging.config.dictConfig(get_logger_config(config=config))
+    asyncio.run(main())
