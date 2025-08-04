@@ -1,8 +1,8 @@
 from typing import Annotated
 
 from langgraph.graph.message import add_messages
-from pydantic import BaseModel
+from pydantic import BaseModel , Field
 
 
 class AgentState(BaseModel):
-    messages: Annotated[list, add_messages]
+    messages: Annotated[list, add_messages] = Field(default_factory=list)
