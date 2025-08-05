@@ -8,8 +8,7 @@ from typing import Callable
 from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.graph.state import StateGraph, START, END, CompiledStateGraph
 from langgraph.prebuilt import ToolNode
-
-from agent.nodes import chatbot_node, route_tools
+from colorama import Fore, Style
 from agent.nodes import llm
 from agent.state import AgentState
 from agent.tools import tools_list
@@ -81,12 +80,16 @@ from langgraph.prebuilt import ToolNode
 
 @dataclass
 class BaseAgent(ABC):
+    graph: CompiledStateGraph = field(init=False)
+
     @abstractmethod
     async def process(self, state: AgentState) -> AgentState: ...
 
 
 @dataclass
-class MyAgent(BaseAgent):
+class Agent(BaseAgent):
+
+
 
     def __post_init__(self):
         self.graph = self.init_graph()
@@ -112,5 +115,7 @@ class MyAgent(BaseAgent):
         return graph_builder.compile()
 
     async def process(self, state: AgentState) -> AgentState:
+        logger.debug(f'вызвали агента {state}')
         result = await self.graph.ainvoke(state)
+        logger.debug(f'{Fore.RED}{result=}{Style.RESET_ALL}')
         return AgentState(**result)

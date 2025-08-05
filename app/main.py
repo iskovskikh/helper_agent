@@ -7,7 +7,7 @@ from colorama import Fore, Style, init as colorama_init
 from agent.agent import Agent, BaseAgent
 from agent.nodes import llm
 from agent.state import AgentState
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage,SystemMessage
 
 from settings.logger import init_logger
 
@@ -23,13 +23,6 @@ init_logger()
 # from settings.logger import get_logger_config
 
 logger = logging.getLogger(__name__)
-
-
-async def main():
-
-    agent: BaseAgent = MyAgent()
-
-    state: AgentState = AgentState()
 
 # def stream_graph_updates(user_input: str):
 #     for event in graph.stream({"messages": [{"role": "user", "content": user_input}]}):
@@ -49,21 +42,31 @@ async def main():
 #
 #         stream_graph_updates(user_input)
 
-
 async def main():
 
-    agent: BaseAgent = Agent(llm=llm)
+    agent: BaseAgent = Agent()
+
+    print(f'\n{agent.graph.get_graph().draw_ascii()}')
+
     state: AgentState = AgentState()
 
     while True:
         user_input = input("User: ")
-        logger.debug(f'{Fore.GREEN}User: {user_input}{Style.RESET_ALL}')
+        print(f'{Fore.GREEN}User: {user_input}{Style.RESET_ALL}')
 
-        state.messages.append(HumanMessage(content=user_input))
+        state.messages.append(HumanMessage(content='Какая погода в москве?'))
+
+        logger.debug(f'{state=}')
 
         state = await agent.process(state=state)
 
-        logger.debug(f'{Fore.BLUE}Assistant: {state.messages[-1].content}{Style.RESET_ALL}')
+        if state.messages:
+            last_message = state.messages[-1]
+            if isinstance(last_message, (HumanMessage, AIMessage)):
+                print(f'{Fore.BLUE}Assistant: {last_message.content}{Style.RESET_ALL}')
+            else:
+                print(f'{Fore.BLUE}Assistant: {str(last_message)}{Style.RESET_ALL}')
+
 
 
 

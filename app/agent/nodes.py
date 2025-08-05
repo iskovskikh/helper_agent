@@ -21,6 +21,7 @@ llm = ChatOllama(model="deepseek-r1:8b")
 
 
 async def analyze_node(state: AgentState):
+    logger.debug(f'{analyze_node.__name__}: {state=}')
     system: BaseMessage = SystemMessage(content=config.prompt.system_prompt)
     messages: list[BaseMessage] = [system] + state.messages
     response: BaseMessage = await llm.ainvoke(messages)
@@ -28,29 +29,13 @@ async def analyze_node(state: AgentState):
     return dict(messages=[response])
 
 
-def route_tools(
-    state: AgentState,
-):
-#     """
-#     Use in the conditional_edge to route to the ToolNode if the last message
-#     has tool calls. Otherwise, route to the end.
-#     """
-#     if isinstance(state, list):
-#         ai_message = state[-1]
-#     elif messages := state.messages:
-#         ai_message = messages[-1]
-#     else:
-#         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-#     if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-#         return "tool_node"
-#     return END
-
-
 async def response_node(state: AgentState):
-    return dict(messages=[state.messages])
+    logger.debug(f'{response_node.__name__}: {state=}')
+    return state
 
 
 def after_analyze_condition(state: AgentState):
+    logger.debug(f'{after_analyze_condition.__name__}: {state=}')
     last_message: BaseMessage = state.messages[-1]
 
     if last_message.tool_calls:
