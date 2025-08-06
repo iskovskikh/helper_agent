@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from langchain_ollama import ChatOllama
 from langgraph.graph.state import END
@@ -12,15 +13,18 @@ from colorama.ansi import Fore, Style
 from agent.state import AgentState
 from settings.config import config
 
-from langchain_ollama import ChatOllama
+from langchain_core.runnables import RunnableConfig
 
 from langchain_core.messages import (SystemMessage, BaseMessage)
+from langchain_core.language_models.chat_models import BaseChatModel
 
 
-llm = ChatOllama(model="deepseek-r1:8b")
 
 
-async def analyze_node(state: AgentState):
+async def analyze_node(state: AgentState, config: RunnableConfig):
+
+    llm: BaseChatModel = cast(BaseChatModel, config.get('configurable').get('llm'))
+
     logger.debug(f'{analyze_node.__name__}: {state=}')
     system: BaseMessage = SystemMessage(content=config.prompt.system_prompt)
     messages: list[BaseMessage] = [system] + state.messages

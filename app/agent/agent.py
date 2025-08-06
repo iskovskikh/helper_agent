@@ -88,7 +88,7 @@ class BaseAgent(ABC):
 
 @dataclass
 class Agent(BaseAgent):
-
+    llm: BaseChatModel
 
 
     def __post_init__(self):

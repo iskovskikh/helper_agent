@@ -5,11 +5,11 @@ import sys
 from colorama import Fore, Style, init as colorama_init
 
 from agent.agent import Agent, BaseAgent
-from agent.nodes import llm
 from agent.state import AgentState
 from langchain_core.messages import HumanMessage, AIMessage,SystemMessage
 
 from settings.logger import init_logger
+from langchain_ollama import ChatOllama
 
 init_logger()
 
@@ -44,7 +44,9 @@ logger = logging.getLogger(__name__)
 
 async def main():
 
-    agent: BaseAgent = Agent()
+    agent: BaseAgent = Agent(
+        llm=ChatOllama(model="deepseek-r1:8b")
+    )
 
     print(f'\n{agent.graph.get_graph().draw_ascii()}')
 

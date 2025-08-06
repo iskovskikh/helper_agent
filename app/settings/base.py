@@ -9,7 +9,7 @@ from pydantic_settings import (
 
 
 BASE_DIR = Path(__file__).parent.parent
-
+from langgraph.prebuilt.chat_agent_executor import AgentState
 
 class PydanticBaseSettings(BaseSettings):
     @classmethod
