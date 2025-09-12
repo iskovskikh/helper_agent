@@ -40,7 +40,9 @@ logging_config = {
     "loggers": {
         "": {
             "level": "DEBUG",
-            "handlers": ["console",],
+            "handlers": [
+                "console",
+            ],
             "propagate": True,  # Не передавать логи родительским логгерам
         },
         # "default": {
@@ -60,8 +62,10 @@ logging_config = {
     },
 }
 
+
 def init_logger():
     logging.config.dictConfig(logging_config)
+
 
 # from settings.config import Config
 #

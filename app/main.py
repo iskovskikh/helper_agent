@@ -1,13 +1,14 @@
 import asyncio
 import logging
-import sys
 
 from colorama import Fore, Style, init as colorama_init
 
 from agent.agent import Agent, BaseAgent
 from agent.state import AgentState
-from langchain_core.messages import HumanMessage, AIMessage,SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
+from agent.tools import tools_list
+from settings import config
 from settings.logger import init_logger
 from langchain_ollama import ChatOllama
 
@@ -17,7 +18,7 @@ init_logger()
 # from agent.state import AgentState
 # from langchain_core.messages import HumanMessage
 #
-# import  logging.config
+import  logging.config
 #
 # from settings.config import config
 # from settings.logger import get_logger_config
@@ -42,38 +43,46 @@ logger = logging.getLogger(__name__)
 #
 #         stream_graph_updates(user_input)
 
+
+from langgraph.prebuilt import create_react_agent
+
 async def main():
 
-    agent: BaseAgent = Agent(
-        llm=ChatOllama(model="deepseek-r1:8b")
-    )
+    model = ChatOllama(model="deepseek-r1:8b")
+    model.bind_tools(tools=tools_list)
 
-    print(f'\n{agent.graph.get_graph().draw_ascii()}')
+    # response = model.invoke("поддеживаешь ли ты вызов тулов?")
+    #
+    # logger.debug(response)
+
+    agent: BaseAgent = Agent(llm=model)
+
+    print(f"\n{agent.graph.get_graph().draw_ascii()}")
 
     state: AgentState = AgentState()
 
     while True:
         user_input = input("User: ")
-        print(f'{Fore.GREEN}User: {user_input}{Style.RESET_ALL}')
+        print(f"{Fore.LIGHTGREEN_EX}User: {user_input}{Style.RESET_ALL}")
 
-        state.messages.append(HumanMessage(content='Какая погода в москве?'))
+        # state.messages.append(HumanMessage(content="Какая сейчас погода в Москве?"))
+        state.messages.append(HumanMessage(content="Какие сейчас дата и время?"))
 
-        logger.debug(f'{state=}')
+        logger.debug(f"{state=}")
 
         state = await agent.process(state=state)
 
         if state.messages:
             last_message = state.messages[-1]
             if isinstance(last_message, (HumanMessage, AIMessage)):
-                print(f'{Fore.BLUE}Assistant: {last_message.content}{Style.RESET_ALL}')
+                print(f"{Fore.LIGHTBLUE_EX}Assistant: {last_message.content}{Style.RESET_ALL}")
             else:
-                print(f'{Fore.BLUE}Assistant: {str(last_message)}{Style.RESET_ALL}')
-
-
+                print(f"{Fore.LIGHTBLUE_EX}Assistant: {str(last_message)}{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":
     colorama_init()
+    init_logger()
     asyncio.run(main())
 # =======
 #     while True:

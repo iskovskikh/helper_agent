@@ -1,27 +1,28 @@
-
 import logging
+import pprint
 import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Callable
 
+from colorama import Fore, Style
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph.state import StateGraph, START, END, CompiledStateGraph
 from langgraph.prebuilt import ToolNode
-from colorama import Fore, Style
-from agent.nodes import llm
+
+from agent.config import CustomContext
+from agent.nodes import analyze_node, response_node, after_analyze_condition
 from agent.state import AgentState
-from agent.tools import tools_list
+from agent.tools import current_datetime_tool, tools_list
 
 logger = logging.getLogger(__name__)
 
-def handle_errors(e: Exception)-> str:
+
+def handle_errors(e: Exception) -> str:
     logger.exception(e)
     formatted_trace = traceback.format_exc()
-    return (
-        f"An error occurred:\n"
-        f"{formatted_trace}"
-    )
+    return f"An error occurred:\n{formatted_trace}"
+
 
 # @dataclass
 # class BaseAgent(ABC):
@@ -68,15 +69,6 @@ def handle_errors(e: Exception)-> str:
 #
 #         return new_state
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-
-from langgraph.graph.state import StateGraph, START, END, CompiledStateGraph
-
-from agent.nodes import analyze_node, response_node, after_analyze_condition
-from agent.state import AgentState
-from langgraph.prebuilt import ToolNode
-
 
 @dataclass
 class BaseAgent(ABC):
@@ -90,32 +82,48 @@ class BaseAgent(ABC):
 class Agent(BaseAgent):
     llm: BaseChatModel
 
-
     def __post_init__(self):
         self.graph = self.init_graph()
 
     def init_graph(self) -> CompiledStateGraph:
         graph_builder = StateGraph(AgentState)
 
-        tool_node = ToolNode(tools=[])
+        tool_node = ToolNode(tools=tools_list)
 
         graph_builder.add_node("analyze_node", analyze_node)
         graph_builder.add_node("response_node", response_node)
         graph_builder.add_node("tool_node", tool_node)
 
-        graph_builder.add_edge(START, 'analyze_node')
+        graph_builder.add_edge(START, "analyze_node")
         graph_builder.add_conditional_edges(
-            'analyze_node',
+            "analyze_node",
             after_analyze_condition,
-            ['tool_node', 'response_node'],
+            ["tool_node", "response_node"],
         )
-        graph_builder.add_edge('tool_node', 'analyze_node')
-        graph_builder.add_edge('response_node', END)
+        graph_builder.add_edge("tool_node", "analyze_node")
+        graph_builder.add_edge("response_node", END)
 
         return graph_builder.compile()
 
     async def process(self, state: AgentState) -> AgentState:
-        logger.debug(f'вызвали агента {state}')
-        result = await self.graph.ainvoke(state)
-        logger.debug(f'{Fore.RED}{result=}{Style.RESET_ALL}')
+        logger.debug(f"вызвали агента {state}")
+
+        config = RunnableConfig(
+            configurable=dict(
+                llm=self.llm,
+            )
+        )
+
+        context = CustomContext(
+            llm=self.llm,
+        )
+        result = await self.graph.ainvoke(
+            input=state,
+            config=config,
+            # context=context,
+        )
+
+        r = pprint.pformat(result)
+
+        logger.debug(f"{Fore.RED}{r=}{Style.RESET_ALL}")
         return AgentState(**result)
