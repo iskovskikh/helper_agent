@@ -1,4 +1,5 @@
 import logging
+import pprint
 from pyexpat.errors import messages
 from typing import cast
 
@@ -26,23 +27,22 @@ async def analyze_node(
         # context: CustomContext
 ):
     llm: BaseChatModel = cast(BaseChatModel, config.get("configurable").get("llm"))
-    # llm: BaseChatModel = context.llm
 
-    logger.debug(f"{analyze_node.__name__}: {state=}")
-    system: BaseMessage = SystemMessage(content=get_system_prompt())
-    messages: list[BaseMessage] = [system] + state.messages
-    response: BaseMessage = await llm.ainvoke([message.model_dump() for message in messages])
-    logger.debug(f"{Fore.MAGENTA}{state.messages}{Style.RESET_ALL}")
+    # logger.debug(f"{Fore.MAGENTA}{analyze_node.__name__}: {pprint.pformat(state)}{Style.RESET_ALL}")
+
+    system_prompt: SystemMessage = SystemMessage(content=get_system_prompt())
+
+    # logger.debug(f'{Fore.LIGHTGREEN_EX}{pprint.pformat(system_prompt)}{Style.RESET_ALL}')
+
+    messages: list[BaseMessage] = [system_prompt] + state.messages
+    response: BaseMessage = await llm.ainvoke(messages)
+
+    logger.debug(f"{Fore.YELLOW}{pprint.pformat(response.content)}{Style.RESET_ALL}")
     return dict(messages=[response])
 
 
-async def response_node(state: AgentState):
-    logger.debug(f"{response_node.__name__}: {state=}")
-    return state
-
-
 def after_analyze_condition(state: AgentState):
-    logger.debug(f"{after_analyze_condition.__name__}: {state=}")
+    # logger.debug(f"{Fore.MAGENTA}{after_analyze_condition.__name__}: {pprint.pformat(state)}{Style.RESET_ALL}")
     last_message: BaseMessage = state.messages[-1]
 
     if last_message.tool_calls:
@@ -56,4 +56,4 @@ def after_analyze_condition(state: AgentState):
                 f"{Style.RESET_ALL}"
             )
         return "tool_node"
-    return "response_node"
+    return "end"

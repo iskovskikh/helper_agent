@@ -11,7 +11,7 @@ from langgraph.graph.state import StateGraph, START, END, CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 
 from agent.config import CustomContext
-from agent.nodes import analyze_node, response_node, after_analyze_condition
+from agent.nodes import analyze_node, after_analyze_condition
 from agent.state import AgentState
 from agent.tools import current_datetime_tool, tools_list
 
@@ -91,17 +91,20 @@ class Agent(BaseAgent):
         tool_node = ToolNode(tools=tools_list)
 
         graph_builder.add_node("analyze_node", analyze_node)
-        graph_builder.add_node("response_node", response_node)
+        # graph_builder.add_node("response_node", response_node)
         graph_builder.add_node("tool_node", tool_node)
 
         graph_builder.add_edge(START, "analyze_node")
         graph_builder.add_conditional_edges(
             "analyze_node",
             after_analyze_condition,
-            ["tool_node", "response_node"],
+            {
+                "tool_node": 'tool_node' ,
+                'end': END,
+            },
         )
         graph_builder.add_edge("tool_node", "analyze_node")
-        graph_builder.add_edge("response_node", END)
+        # graph_builder.add_edge("response_node", END)
 
         return graph_builder.compile()
 
@@ -117,13 +120,12 @@ class Agent(BaseAgent):
         context = CustomContext(
             llm=self.llm,
         )
+
         result = await self.graph.ainvoke(
             input=state,
             config=config,
             # context=context,
         )
 
-        r = pprint.pformat(result)
-
-        logger.debug(f"{Fore.RED}{r=}{Style.RESET_ALL}")
+        # logger.debug(f"{Fore.RED}{result=}{Style.RESET_ALL}")
         return AgentState(**result)

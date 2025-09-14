@@ -16,8 +16,8 @@ logging_config = {
         "console": {
             "class": "logging.StreamHandler",
             "level": "DEBUG",
-            # "formatter": "default",
-            "formatter": "simple",
+            "formatter": "default",
+            # "formatter": "simple",
             "stream": "ext://sys.stdout",
         },
         # "file": {
@@ -55,11 +55,15 @@ logging_config = {
         #     "handlers": ["console"],
         #     "propagate": False,
         # },
+        'httpcore': {
+            'level': 'INFO'
+        }
     },
     "root": {  # Настройки корневого логгера (если не найден конкретный логгер)
         "level": "DEBUG",
         "handlers": ["console"],
     },
+
 }
 
 

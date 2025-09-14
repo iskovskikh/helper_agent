@@ -1,10 +1,14 @@
+import logging
 import os
+import pprint
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from settings.base import PydanticBaseSettings, BASE_DIR
+
+logger = logging.getLogger(__name__)
 
 CONFIG_PATH = Path(os.environ.get("CONFIG", BASE_DIR.parent / "config.yaml"))
 
@@ -36,3 +40,12 @@ class Config(PydanticBaseSettings):
 
 
 config = Config()
+
+def print_config():
+    logger.debug(f'{CONFIG_PATH=}')
+    lines = pprint.pformat(
+        config.model_dump(),
+        indent=2,
+    ).split('\n')
+    for line in lines:
+        logger.debug(line)
